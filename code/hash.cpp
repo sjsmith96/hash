@@ -214,9 +214,44 @@ string *find_string(HashTable *table, char *key, size_t length, u32 hash)
 }
 
 
+internal string *intern_range(char *chars, size_t len, HashTable *intern_table)
+{
+
+    u32 hash_ = hash(chars, len);
+    string *entry = find_string(intern_table, chars, len, hash_);
+    
+    if(!entry)
+    {
+        // It's a new string
+        string *temp = (string *)malloc(sizeof(string));
+        char *str = (char *)malloc(len + 1);
+        memcpy(str, chars, len);
+        str[len] = '\0';
+        temp->chars = str;
+        temp->len = len;
+        temp->hash = hash_;
+        table_set(intern_table, temp, Value{0});
+        return temp;
+    }
+    
+    return entry;
+}
+
+
+internal string *intern(char *string, HashTable *intern_table)
+{
+    return intern_range(string, strlen(string), intern_table);
+}
+
+
 int main(int argc, char** argv)
 {
-    printf("Hello, World!");
+    HashTable table;
+    init_table(&table);
+    HashTable intern_table;
+    init_table(&intern_table);
+    string *test = intern("test", &intern_table);
+    
     return 0;
 }
 
