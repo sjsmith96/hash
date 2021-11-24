@@ -24,7 +24,7 @@ struct string
 struct HashTableEntry
 {
     string *key;
-    Value value;
+    void *value;
 };
 
 struct HashTable
@@ -40,7 +40,7 @@ struct HashTable
 
 void init_table(HashTable *table);
 u32 hash(char *key, size_t length);
-bool32 table_set(HashTable *table, char *key, Value value);
+bool32 table_set(HashTable *table, char *key, void *value);
 string *find_string(HashTable *table, char *key, size_t length, u32 hash);
 
 #endif

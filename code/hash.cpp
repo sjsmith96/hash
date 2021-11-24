@@ -191,7 +191,7 @@ internal void adjust_capacity(HashTable *table, u32 capacity)
 
 
 
-bool32 table_set(HashTable *table, char *key, Value value)
+bool32 table_set(HashTable *table, char *key, void *value)
 {
 
     string *key_string = intern(table, key);
@@ -215,7 +215,7 @@ bool32 table_set(HashTable *table, char *key, Value value)
 
 }
 
-internal bool32 table_get(HashTable *table, char *key, Value *value)
+internal void *table_get(HashTable *table, char *key)
 {
     string *key_string = intern(table, key);
     if(table->count == 0)
@@ -229,8 +229,7 @@ internal bool32 table_get(HashTable *table, char *key, Value *value)
         return false;
     }
 
-    *value = entry->value;
-    return true;
+    return entry->value;
 }
 
 internal bool32 table_delete(HashTable *table, string *key)
@@ -292,10 +291,11 @@ int main(int argc, char** argv)
     init_table(&table);
     HashTable intern_table;
     init_table(&intern_table);
-    Value test = 0;
-    table_set(&table, "test", 4);
-    table_get(&table, "test", &test);
-    printf("%d", (int)test);
+    int value = 4;
+    int *test = 0;
+    table_set(&table, "test", (void *) (&value));
+    test = (int *) table_get(&table, "test");
+    printf("%d", *test);
     return 0;
 }
 
