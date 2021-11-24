@@ -7,6 +7,9 @@
 // intents and purposes an empty entry. A tombstone lets us remove an
 // entry from the hash table without ruining the linear probing.
 
+// TODO: Have the hash table be type agnostic and return void *s.
+
+
 internal HashTableEntry *add_null_entries(HashTableEntry *entries, u32 capacity)
 {
     while(buf_count(entries) < (s32)capacity)
@@ -57,9 +60,11 @@ u32 hash(char *key, size_t length)
     return hash;
 }
 
-internal HashTableEntry *find_entry(HashTableEntry *entries, string *key, u32 capacity)
+internal HashTableEntry *find_entry(HashTableEntry *entries, char *key, u32 capacity)
 {
-    u32 index = key->hash % capacity;
+    size_t key_len = strlen(key);
+    u32 key_hash = hash(key, key_len);
+    u32 index = key_hash % capacity;
     HashTableEntry *tombstone = NULL;
 
     for(;;)
@@ -85,7 +90,9 @@ internal HashTableEntry *find_entry(HashTableEntry *entries, string *key, u32 ca
         }
         else
         {
-            if(entry->key == key)
+            if(strlen(entry->key) == key_len &&
+               hash(entry->key) == key_hash &&
+               (memcmp(entry->key, key, key_len) == 0))
             {
                 return entry;
             }
@@ -122,7 +129,7 @@ internal void adjust_capacity(HashTable *table, u32 capacity)
 
 
 
-bool32 table_set(HashTable *table, string *key, Value value)
+bool32 table_set(HashTable *table, char *key, Value value)
 {
     if(table->count + 1 > table->capacity * TABLE_MAX_LOAD)
     {
@@ -138,7 +145,7 @@ bool32 table_set(HashTable *table, string *key, Value value)
         table->count++;
     }
 
-    entry->key = key;
+    entry->key->chars = key;
     entry->value = value;
     return is_new_key;
 
@@ -213,10 +220,12 @@ string *find_string(HashTable *table, char *key, size_t length, u32 hash)
     
 }
 
-
 int main(int argc, char** argv)
 {
-    printf("Hello, World!");
-    return 0;
+    HashTable table;
+    init_table(&table);
+    Value *testValue;
+    *testValue = 4;
+    table_set(&table, "test", testValue);
 }
 
