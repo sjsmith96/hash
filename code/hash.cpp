@@ -7,6 +7,66 @@
 // intents and purposes an empty entry. A tombstone lets us remove an
 // entry from the hash table without ruining the linear probing.
 
+/*
+  TODO:
+  I want the usage to look thusly:
+  table_set(&table, "key", value);
+  table_get(&table, "key", *value_to_fill);
+
+  I need to initialize the table with a pointer to an intern table.
+
+ */
+
+
+internal string *intern_range(HashTable *table, char *chars, size_t len)
+{
+
+    for(int i = 0; i < buf_count(table->interns); i++)
+    {
+        if((len == table->interns[i].len) &&
+           (strncmp(chars, table->interns[i].chars, len) == 0))
+        {
+            return &table->interns[i];
+        }
+    }
+
+    string new_intern;
+    new_intern.chars = chars;
+    new_intern.len = len;
+    new_intern.hash = hash(chars, len);
+    buf_push(table->interns, new_intern);
+    int index = (buf_count(table->interns) - 1);
+    return &table->interns[index];
+
+    /*
+    u32 hash_ = hash(chars, len);
+    string *entry = find_string(intern_table, chars, len, hash_);
+    
+    if(!entry)
+    {
+        // It's a new string
+        string *temp = (string *)malloc(sizeof(string));
+        char *str = (char *)malloc(len + 1);
+        memcpy(str, chars, len);
+        str[len] = '\0';
+        temp->chars = str;
+        temp->len = len;
+        temp->hash = hash_;
+        table_set(intern_table, str, Value{0});
+        return temp;
+    }
+    
+    return entry;
+    */
+}
+
+
+internal string *intern(HashTable *table, char *string)
+{
+    return intern_range(table, string, strlen(string));
+}
+
+
 internal HashTableEntry *add_null_entries(HashTableEntry *entries, u32 capacity)
 {
     while(buf_count(entries) < (s32)capacity)
@@ -21,10 +81,14 @@ internal HashTableEntry *add_null_entries(HashTableEntry *entries, u32 capacity)
 
 void init_table(HashTable *table)
 {
+
+    
     table->count = 0;
     table->capacity = 8;
     table->entries = NULL;
     table->entries = add_null_entries(table->entries, table->capacity);
+    table->interns = NULL;
+
 }
 
 internal void free_table(HashTable *table)
@@ -33,6 +97,11 @@ internal void free_table(HashTable *table)
     table->count = 0;
     table->capacity = 0;
     table->entries = NULL;
+
+    if(table->interns)
+    {
+        buf_free(table->interns);
+    }
 }
 
 internal void free_string_table(HashTable *table)
@@ -122,14 +191,16 @@ internal void adjust_capacity(HashTable *table, u32 capacity)
 
 
 
-bool32 table_set(HashTable *table, string *key, Value value)
+bool32 table_set(HashTable *table, char *key, Value value)
 {
+
+    string *key_string = intern(table, key);
     if(table->count + 1 > table->capacity * TABLE_MAX_LOAD)
     {
         adjust_capacity(table, table->capacity * 2);
     }
 
-    HashTableEntry *entry = find_entry(table->entries, key, table->capacity);
+    HashTableEntry *entry = find_entry(table->entries, key_string, table->capacity);
 
     bool32 is_new_key = entry->key == NULL;
     if(is_new_key
@@ -138,20 +209,21 @@ bool32 table_set(HashTable *table, string *key, Value value)
         table->count++;
     }
 
-    entry->key = key;
+    entry->key = key_string;
     entry->value = value;
     return is_new_key;
 
 }
 
-internal bool32 table_get(HashTable *table, string *key, Value *value)
+internal bool32 table_get(HashTable *table, char *key, Value *value)
 {
+    string *key_string = intern(table, key);
     if(table->count == 0)
     {
         return false;
     }
 
-    HashTableEntry *entry = find_entry(table->entries, key, table->capacity);
+    HashTableEntry *entry = find_entry(table->entries, key_string, table->capacity);
     if(entry->key == NULL)
     {
         return false;
@@ -214,44 +286,16 @@ string *find_string(HashTable *table, char *key, size_t length, u32 hash)
 }
 
 
-internal string *intern_range(char *chars, size_t len, HashTable *intern_table)
-{
-
-    u32 hash_ = hash(chars, len);
-    string *entry = find_string(intern_table, chars, len, hash_);
-    
-    if(!entry)
-    {
-        // It's a new string
-        string *temp = (string *)malloc(sizeof(string));
-        char *str = (char *)malloc(len + 1);
-        memcpy(str, chars, len);
-        str[len] = '\0';
-        temp->chars = str;
-        temp->len = len;
-        temp->hash = hash_;
-        table_set(intern_table, temp, Value{0});
-        return temp;
-    }
-    
-    return entry;
-}
-
-
-internal string *intern(char *string, HashTable *intern_table)
-{
-    return intern_range(string, strlen(string), intern_table);
-}
-
-
 int main(int argc, char** argv)
 {
     HashTable table;
     init_table(&table);
     HashTable intern_table;
     init_table(&intern_table);
-    string *test = intern("test", &intern_table);
-    
+    Value test = 0;
+    table_set(&table, "test", 4);
+    table_get(&table, "test", &test);
+    printf("%d", (int)test);
     return 0;
 }
 
