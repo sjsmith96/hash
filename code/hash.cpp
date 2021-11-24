@@ -7,17 +7,6 @@
 // intents and purposes an empty entry. A tombstone lets us remove an
 // entry from the hash table without ruining the linear probing.
 
-/*
-  TODO:
-  I want the usage to look thusly:
-  table_set(&table, "key", value);
-  table_get(&table, "key", *value_to_fill);
-
-  I need to initialize the table with a pointer to an intern table.
-
- */
-
-
 internal string *intern_range(HashTable *table, char *chars, size_t len)
 {
 
@@ -38,26 +27,6 @@ internal string *intern_range(HashTable *table, char *chars, size_t len)
     int index = (buf_count(table->interns) - 1);
     return &table->interns[index];
 
-    /*
-    u32 hash_ = hash(chars, len);
-    string *entry = find_string(intern_table, chars, len, hash_);
-    
-    if(!entry)
-    {
-        // It's a new string
-        string *temp = (string *)malloc(sizeof(string));
-        char *str = (char *)malloc(len + 1);
-        memcpy(str, chars, len);
-        str[len] = '\0';
-        temp->chars = str;
-        temp->len = len;
-        temp->hash = hash_;
-        table_set(intern_table, str, Value{0});
-        return temp;
-    }
-    
-    return entry;
-    */
 }
 
 
